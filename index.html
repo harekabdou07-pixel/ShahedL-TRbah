@@ -11,8 +11,8 @@
 <body>
 <header class="top">
   <div class="mini">⏱ <span id="timer">01:00:00</span></div>
-  <div class="paypal"><b>PayPal</b><strong>$<span id="cash">0.00</span></strong></div>
-  <div class="milestones"><span>15,000 👑</span><span>30,000 👑</span><span>50,000 👑</span></div>
+  <div class="balance"><b>الرصيد</b><strong>$<span id="cash">0.00</span></strong></div>
+  <div class="milestones"><span>15,000 👑</span><span>30,000 👑</span><span>50,000 👑 = $0.10</span></div><div class="coins">العملات: <b id="coinBalance">0</b> 👑</div>
 </header>
 
 <main id="app">
@@ -90,6 +90,8 @@
   </section>
 
   <section id="video" class="page"><div class="card center"><h1>فيديو قصير</h1><p>اضغط للمشاهدة والحصول على العملات.</p><button class="big" onclick="watchAd('الفيديو القصير',500)">▶ مشاهدة للفوز</button></div></section>
+<div id="adModal" class="ad-modal"><div class="ad-box"><div class="ad-label">إعلان</div><h2 id="adTitle">إعلان</h2><p>المكافأة بعد انتهاء المشاهدة</p><div class="ad-count"><span id="adCountdown">3</span></div><button id="adClose" class="big">متابعة</button></div></div>
+<div id="toast" class="toast"></div>
   <section id="me" class="page"><div class="card center"><h1>أنا</h1><p>الرصيد: <b id="profileCash">$0.00</b></p><button class="primary" onclick="alert('السحب هنا تجريبي في هذه النسخة.')">سحب تجريبي</button></div></section>
 </main>
 

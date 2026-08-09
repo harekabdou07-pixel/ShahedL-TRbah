@@ -1,0 +1,14 @@
+{
+  "name": "shahedl-trbah",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo Static app ready"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.4.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.0"
+  }
+}

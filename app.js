@@ -1,11 +1,106 @@
-let coins=Number(localStorage.getItem('coins')||0), cash=Number(localStorage.getItem('cash')||0);
-let tries=JSON.parse(localStorage.getItem('tries')||'{"wheel":2,"shake":2,"instant":2}');
-const $=id=>document.getElementById(id);
-function render(){ $('cash').textContent=cash.toFixed(2); $('profileCash').textContent='$'+cash.toFixed(2); $('wheelTries').textContent=tries.wheel+'/2';$('shakeTries').textContent=tries.shake+'/2';$('instantTries').textContent=tries.instant+'/2'; localStorage.setItem('coins',coins);localStorage.setItem('cash',cash);localStorage.setItem('tries',JSON.stringify(tries)); }
-function addCoins(n){coins+=n;while(coins>=50000){coins-=50000;cash+=.10}render();alert('ربحت '+n+' عملة 👑');}
-function showPage(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');render();if(id==='instant')buildBoard();}
-function watchAd(name,reward){alert('محاكاة إعلان: '+name+'\\nفي النسخة الإنتاجية هنا سيتم تشغيل إعلان المكافأة ثم إضافة العملات.');addCoins(reward);}
-function claimLogin(){addCoins(200)}
-function play(type){if(tries[type]>0){tries[type]--;render();let prizes=[500,1000,1500,2000,2500,5000];let p=prizes[Math.floor(Math.random()*prizes.length)];if(type==='wheel'&&Math.random()<.12){alert('الجائزة: $5 💵');cash+=5;render()}else addCoins(p)}else watchAd('فرصة إضافية',1000)}
-function buildBoard(){let b=$('board');b.innerHTML='';for(let i=0;i<9;i++){let x=document.createElement('button');x.textContent='?';x.onclick=()=>{if(tries.instant>0){tries.instant--;x.textContent=['👑','👑','💵','👑','⭐'][Math.floor(Math.random()*5)];addCoins(1000)}else watchAd('فرصة إضافية',1000)};b.appendChild(x)}}
-let end=Number(localStorage.getItem('freePlayResetAt')||0);function tick(){let d=Math.max(0,end-Date.now());let h=String(Math.floor(d/3600000)).padStart(2,'0'),m=String(Math.floor(d%3600000/60000)).padStart(2,'0'),s=String(Math.floor(d%60000/1000)).padStart(2,'0');$('timer').textContent=h+':'+m+':'+s;if(d<=0){tries={wheel:2,shake:2,instant:2};end=Date.now()+3600000;localStorage.setItem('freePlayResetAt',end);render()}}if(!end || end<=Date.now()){end=Date.now()+3600000;localStorage.setItem('freePlayResetAt',end);}setInterval(tick,1000);tick();render();
+/* شاهد لتربح — game state and ad bridge */
+const $ = id => document.getElementById(id);
+const KEY='shahed_state_v3';
+const HOUR=60*60*1000;
+let state=JSON.parse(localStorage.getItem(KEY)||'null')||{
+  coins:0,cash:0,
+  tries:{wheel:2,shake:2,instant:2},
+  resetAt:Date.now()+HOUR,
+  loginClaimed:false
+};
+function save(){localStorage.setItem(KEY,JSON.stringify(state));}
+function render(){
+  $('cash').textContent=state.cash.toFixed(2);
+  $('profileCash').textContent='$'+state.cash.toFixed(2);
+  ['wheel','shake','instant'].forEach(t=>$(t+'Tries').textContent=state.tries[t]+'/2');
+  $('coinBalance').textContent=state.coins.toLocaleString('en-US');
+  save();
+}
+function addCoins(n, label='المكافأة'){
+  state.coins+=n;
+  while(state.coins>=50000){state.coins-=50000;state.cash+=0.10;}
+  render(); toast('+'+n.toLocaleString('en-US')+' عملة');
+}
+function toast(msg){
+  const x=$('toast'); x.textContent=msg; x.classList.add('show');
+  clearTimeout(window.__toast); window.__toast=setTimeout(()=>x.classList.remove('show'),1600);
+}
+/* Native bridge: when packaged for Android, a native ad layer can replace this.
+   On the web preview it deliberately uses a safe demo ad so no fake ad revenue is generated. */
+async function watchAd(name,reward,cb){
+  const ok=await demoAd(name);
+  if(ok){ addCoins(reward,name); if(cb)cb(); }
+}
+function demoAd(name){
+  return new Promise(resolve=>{
+    $('adTitle').textContent=name;
+    $('adModal').classList.add('show');
+    let left=3; $('adCountdown').textContent=left;
+    const timer=setInterval(()=>{
+      left--; $('adCountdown').textContent=Math.max(left,0);
+      if(left<=0){clearInterval(timer);$('adClose').disabled=false;}
+    },1000);
+    $('adClose').disabled=true;
+    $('adClose').onclick=()=>{ $('adModal').classList.remove('show');resolve(true); };
+  });
+}
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  $(id).classList.add('active');
+  render();
+  if(id==='instant')buildBoard();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function claimLogin(){
+  if(state.loginClaimed){toast('تم استلام مكافأة الدخول');return;}
+  state.loginClaimed=true; addCoins(200,'تسجيل الدخول');
+}
+function play(type){
+  if(state.tries[type]>0){
+    state.tries[type]--; render();
+    if(type==='wheel') spinWheel();
+    else if(type==='shake') shakePrize();
+    else instantPlay();
+  }else{
+    watchAd('فرصة إضافية',1000,()=>{ /* ad reward already credited */ state.tries[type]=1; render(); });
+  }
+}
+function spinWheel(){
+  const prizes=[500,1000,1500,2000,2500,5000];
+  if(Math.random()<0.12){state.cash+=5;render();toast('الجائزة: $5 💵');}
+  else addCoins(prizes[Math.floor(Math.random()*prizes.length)]);
+}
+function shakePrize(){
+  const prizes=[500,1000,1500,2000,2500,5000];
+  if(Math.random()<0.12){state.cash+=5;render();toast('الجائزة: $5 💵');}
+  else addCoins(prizes[Math.floor(Math.random()*prizes.length)]);
+}
+function buildBoard(){
+  const b=$('board'); b.innerHTML='';
+  for(let i=0;i<9;i++){
+    const x=document.createElement('button'); x.textContent='?';
+    x.onclick=()=>{
+      if(x.dataset.done)return;
+      if(state.tries.instant>0){
+        state.tries.instant--; x.dataset.done='1';
+        x.textContent=['👑','👑','💵','👑','⭐'][Math.floor(Math.random()*5)];
+        render(); if(x.textContent==='💵'){state.cash+=5;render();toast('الجائزة: $5 💵')}else addCoins(1000);
+      }else watchAd('فرصة إضافية',1000,()=>{state.tries.instant=1;render();});
+    }; b.appendChild(x);
+  }
+}
+function resetHourly(){
+  if(Date.now()>=state.resetAt){
+    state.tries={wheel:2,shake:2,instant:2};
+    state.resetAt=Date.now()+HOUR; save(); toast('تم تجديد الفتحتين المجانيتين');
+  }
+}
+function tick(){
+  resetHourly();
+  const d=Math.max(0,state.resetAt-Date.now());
+  const h=String(Math.floor(d/3600000)).padStart(2,'0');
+  const m=String(Math.floor(d%3600000/60000)).padStart(2,'0');
+  const s=String(Math.floor(d%60000/1000)).padStart(2,'0');
+  $('timer').textContent=`${h}:${m}:${s}`;
+}
+setInterval(tick,1000); tick(); render();
