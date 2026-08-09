@@ -1,0 +1,11 @@
+let coins=Number(localStorage.getItem('coins')||0), cash=Number(localStorage.getItem('cash')||0);
+let tries=JSON.parse(localStorage.getItem('tries')||'{"wheel":2,"shake":2,"instant":2}');
+const $=id=>document.getElementById(id);
+function render(){ $('cash').textContent=cash.toFixed(2); $('profileCash').textContent='$'+cash.toFixed(2); $('wheelTries').textContent=tries.wheel+'/2';$('shakeTries').textContent=tries.shake+'/2';$('instantTries').textContent=tries.instant+'/2'; localStorage.setItem('coins',coins);localStorage.setItem('cash',cash);localStorage.setItem('tries',JSON.stringify(tries)); }
+function addCoins(n){coins+=n;while(coins>=50000){coins-=50000;cash+=.10}render();alert('ربحت '+n+' عملة 👑');}
+function showPage(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');render();if(id==='instant')buildBoard();}
+function watchAd(name,reward){alert('محاكاة إعلان: '+name+'\\nفي النسخة الإنتاجية هنا سيتم تشغيل إعلان المكافأة ثم إضافة العملات.');addCoins(reward);}
+function claimLogin(){addCoins(200)}
+function play(type){if(tries[type]>0){tries[type]--;render();let prizes=[500,1000,1500,2000,2500,5000];let p=prizes[Math.floor(Math.random()*prizes.length)];if(type==='wheel'&&Math.random()<.12){alert('الجائزة: $5 💵');cash+=5;render()}else addCoins(p)}else watchAd('فرصة إضافية',1000)}
+function buildBoard(){let b=$('board');b.innerHTML='';for(let i=0;i<9;i++){let x=document.createElement('button');x.textContent='?';x.onclick=()=>{if(tries.instant>0){tries.instant--;x.textContent=['👑','👑','💵','👑','⭐'][Math.floor(Math.random()*5)];addCoins(1000)}else watchAd('فرصة إضافية',1000)};b.appendChild(x)}}
+let end=Number(localStorage.getItem('freePlayResetAt')||0);function tick(){let d=Math.max(0,end-Date.now());let h=String(Math.floor(d/3600000)).padStart(2,'0'),m=String(Math.floor(d%3600000/60000)).padStart(2,'0'),s=String(Math.floor(d%60000/1000)).padStart(2,'0');$('timer').textContent=h+':'+m+':'+s;if(d<=0){tries={wheel:2,shake:2,instant:2};end=Date.now()+3600000;localStorage.setItem('freePlayResetAt',end);render()}}if(!end || end<=Date.now()){end=Date.now()+3600000;localStorage.setItem('freePlayResetAt',end);}setInterval(tick,1000);tick();render();
