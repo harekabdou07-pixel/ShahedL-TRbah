@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#ff8a00">
+  <link rel="manifest" href="manifest.json">
+  <title>شاهد لتربح</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="mini">⏱ <span id="timer">01:00:00</span></div>
+  <div class="balance"><b>العملات داخل اللعبة</b><strong><span id="cash">0</span> 👑</strong></div>
+  <div class="milestones"><span>15,000 👑</span><span>30,000 👑</span><span>50,000 👑</span></div><div class="coins">العملات: <b id="coinBalance">0</b> 👑</div>
+</header>
+
+<main id="app">
+  <section id="rewards" class="page active">
+    <div class="card">
+      <h1>تسجيل الدخول للمكافآت</h1>
+      <button class="primary" onclick="claimLogin()">دخول</button>
+      <div class="days">
+        <div><b>Day 1</b><em>👑</em><strong>+200</strong></div>
+        <div><b>Day 2</b><em>👑</em><strong>+400</strong></div>
+        <div><b>Day 3</b><em>👑</em><strong>+500</strong></div>
+        <div><b>Day 4</b><em>👑</em><strong>+600</strong></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h1>المكافآت اليومية</h1>
+      <div class="task">
+        <button class="go" onclick="watchAd('فيديوهات المشاهدة',5400)">GO</button>
+        <div><b>🎬 الفيديوهات المشاهدة +5400</b><small>👑 +100 &nbsp; 👑 +200 &nbsp; 👑 +300 &nbsp; 👑 +400</small></div>
+      </div>
+      <div class="task"><button class="go" onclick="watchAd('مكافأة إضافية',1000)">GO</button><div><b>شاهد إعلان واربح</b><small>كل مشاهدة تمنح عملات</small></div></div>
+    </div>
+
+    <div class="card">
+      <h1>اكسب العملات من الألعاب</h1>
+      <div class="game-grid">
+        <button onclick="showPage('wheel')">🎡<span>عجلة الحظ</span></button>
+        <button onclick="showPage('shake')">🌳<span>هز واربح</span></button>
+        <button onclick="showPage('instant')">🎯<span>الفوز الفوري</span></button>
+        <button onclick="showPage('meal')">🍔<span>مكافأة الوجبة</span></button>
+      </div>
+    </div>
+  </section>
+
+  <section id="wheel" class="page">
+    <button class="back" onclick="showPage('rewards')">→</button>
+    <div class="game purple">
+      <h1>عجلة الحظ</h1><h3>فوز 100%</h3>
+      <div class="wheel"><div class="pointer">◆</div><div class="wheel-center">▶</div>
+        <div class="seg s1">1000 👑</div><div class="seg s2">2500 👑</div><div class="seg s3">2000 👑</div>
+        <div class="seg s4">5000 👑</div><div class="seg s5">500 👑</div><div class="seg s6">1500 👑</div>
+      </div>
+      <p class="tries">المتبقي: <b id="wheelTries">2/2</b></p>
+      <button class="big" onclick="play('wheel')">دوران مجاني</button>
+      <div class="rules"><h2>القواعد</h2><p>1. يحصل كل مستخدم على 2 دوران مجاني كل ساعة.</p><p>2. يمكنك مشاهدة إعلان للحصول على دورات إضافية.</p></div>
+    </div>
+  </section>
+
+  <section id="shake" class="page">
+    <button class="back" onclick="showPage('rewards')">→</button>
+    <div class="game yellow"><h1>هز واربح</h1><p>هز هاتفك للفوز بالمكافآت.</p><p>الفرص المتبقية: <b id="shakeTries">2/2</b></p>
+      <div class="tree">🌳<div>👑</div><div>👑</div><div>👑</div><div>👑</div></div>
+      <button class="big" onclick="play('shake')">هز الآن</button>
+      <div class="rules"><h2>التعليمات</h2><p>1. لكل مستخدم فرصتان مجانيتان كل ساعة.</p><p>2. يمكنك الحصول على فرص إضافية عن طريق مشاهدة الفيديوهات.</p></div>
+    </div>
+  </section>
+
+  <section id="instant" class="page">
+    <button class="back" onclick="showPage('rewards')">→</button>
+    <div class="game purple"><h1>الفوز الفوري</h1><p class="notice">ابحث عن الرمز المتطابق لتحقيق المكافآت</p>
+      <div class="board" id="board"></div><p class="tries">الفرص المتبقية: <b id="instantTries">2/2</b></p>
+      <button class="big" onclick="play('instant')">فز الآن</button>
+      <div class="rules"><h2>التعليمات</h2><p>1. لكل مستخدم فرصتان مجانيتان كل ساعة.</p><p>2. يمكنك الحصول على فرص إضافية عن طريق مشاهدة الفيديوهات.</p></div>
+    </div>
+  </section>
+
+  <section id="meal" class="page">
+    <button class="back" onclick="showPage('rewards')">→</button>
+    <div class="game meal"><h1>مكافأة الوجبة</h1><div class="food">🍔 🌭 🍜 🥤</div>
+      <div class="mealbox"><b>وقت مكافأة غداء: 11:00-13:00</b><div class="meal-items">
+        <span>فطور<br>👑<b>1000</b></span><span>غداء<br>👑<b>2000</b></span><span>عشاء<br>👑<b>1000</b></span><span>ليل<br>👑<b>2000</b></span>
+      </div><button class="big" onclick="watchAd('المكافأة الفائتة',1000)">شاهد الفيديو للحصول على المكافأة الفائتة</button></div>
+    </div>
+  </section>
+
+  <section id="video" class="page"><div class="card center"><h1>فيديو قصير</h1><p>اضغط للمشاهدة والحصول على العملات.</p><button class="big" onclick="watchAd('الفيديو القصير',500)">▶ مشاهدة للفوز</button></div></section>
+<div id="adModal" class="ad-modal"><div class="ad-box"><div class="ad-label">إعلان</div><h2 id="adTitle">إعلان</h2><p>المكافأة بعد انتهاء المشاهدة</p><div class="ad-count"><span id="adCountdown">3</span></div><button id="adClose" class="big">متابعة</button></div></div>
+<div id="toast" class="toast"></div>
+  <section id="me" class="page"><div class="card center"><h1>أنا</h1><p>العملات: <b id="profileCash">0 👑</b></p><p class="notice">المكافآت هنا عملات داخل اللعبة وليست أموالًا نقدية.</p></div></section>
+</main>
+
+<nav>
+  <button onclick="showPage('video')">▶<span>فيديو قصير</span></button>
+  <button class="selected" onclick="showPage('rewards')">🎁<span>مكافآت</span></button>
+  <button onclick="showPage('me')">◉<span>أنا</span></button>
+</nav>
+<script src="app.js"></script>
+
+<section id="rewarded-section" class="rewarded-section">
+  <h3>شاهد إعلانًا واربح</h3>
+  <p>شاهد إعلانًا اختياريًا واحصل على عملات داخل اللعبة.</p>
+  <button type="button" onclick="showRewardedAd(1000)">🎁 شاهد إعلانًا +1000 عملة</button>
+</section>
+
+</body></html>
