@@ -248,4 +248,145 @@ public class MainActivity extends Activity {
 
                         interstitialAd = ad;
 
-                        ad
+                        ad.setFullScreenContentCallback(
+                                new FullScreenContentCallback() {
+
+                                    @Override
+                                    public void onAdDismissedFullScreenContent() {
+                                        interstitialAd = null;
+                                        loadInterstitial();
+                                    }
+
+                                    @Override
+                                    public void onAdFailedToShowFullScreenContent(
+                                            AdError error) {
+
+                                        interstitialAd = null;
+                                        loadInterstitial();
+                                    }
+                                }
+                        );
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(LoadAdError error) {
+                        interstitialAd = null;
+                    }
+                }
+        );
+    }
+
+    private void maybeShowInterstitial() {
+
+        pageSwitchCount++;
+
+        long now = System.currentTimeMillis();
+
+        if (pageSwitchCount < 2 ||
+                now - lastInterstitialShown < 60_000L) {
+            return;
+        }
+
+        if (interstitialAd == null) {
+            loadInterstitial();
+            return;
+        }
+
+        InterstitialAd ad = interstitialAd;
+        interstitialAd = null;
+
+        lastInterstitialShown = now;
+        pageSwitchCount = 0;
+
+        ad.show(this);
+    }
+
+    private void loadAppOpen() {
+
+        if (appOpenAd != null || appOpenShowing) {
+            return;
+        }
+
+        AppOpenAd.load(
+                this,
+                APP_OPEN_AD_UNIT,
+                new AdRequest.Builder().build(),
+
+                new AppOpenAd.AppOpenAdLoadCallback() {
+
+                    @Override
+                    public void onAdLoaded(AppOpenAd ad) {
+
+                        appOpenAd = ad;
+
+                        ad.setFullScreenContentCallback(
+                                new FullScreenContentCallback() {
+
+                                    @Override
+                                    public void onAdDismissedFullScreenContent() {
+
+                                        appOpenShowing = false;
+                                        appOpenAd = null;
+
+                                        loadAppOpen();
+                                    }
+
+                                    @Override
+                                    public void onAdFailedToShowFullScreenContent(
+                                            AdError error) {
+
+                                        appOpenShowing = false;
+                                        appOpenAd = null;
+
+                                        loadAppOpen();
+                                    }
+                                }
+                        );
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(LoadAdError error) {
+
+                        appOpenAd = null;
+                    }
+                }
+        );
+    }
+
+    private void showAppOpenIfReady() {
+
+        if (isFinishing()
+                || isDestroyed()
+                || appOpenShowing
+                || appOpenAd == null) {
+
+            if (appOpenAd == null) {
+                loadAppOpen();
+            }
+
+            return;
+        }
+
+        appOpenShowing = true;
+        appOpenAd.show(this);
+    }
+
+    private class AdBridge {
+
+        @JavascriptInterface
+        public void showRewardedAd(int reward) {
+
+            runOnUiThread(() ->
+                    showRewarded(reward)
+            );
+        }
+
+        @JavascriptInterface
+        public void showInterstitialAd() {
+
+            runOnUiThread(() ->
+                    maybeShowInterstitial()
+            );
+        }
+    }
+}
