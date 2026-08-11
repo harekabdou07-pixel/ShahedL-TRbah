@@ -27,10 +27,39 @@ function toast(msg){
 }
 /* Native bridge: when packaged for Android, a native ad layer can replace this.
    On the web preview it deliberately uses a safe demo ad so no fake ad revenue is generated. */
+let pendingRewardCallback = null;
+
 async function watchAd(name,reward,cb){
-  const ok=await demoAd(name);
-  if(ok){ addCoins(reward,name); if(cb)cb(); }
+  // عند تشغيل التطبيق كـ Android APK استخدم AdMob الحقيقي
+  if(window.AndroidAdMob && typeof window.AndroidAdMob.showRewardedAd === 'function'){
+    pendingRewardCallback = cb || null;
+    window.AndroidAdMob.showRewardedAd(reward);
+    return;
+  }
+
+  // في نسخة المتصفح فقط يبقى الإعلان التجريبي
+  const ok = await demoAd(name);
+  if(ok){
+    addCoins(reward,name);
+    if(cb) cb();
+  }
 }
+
+// يستدعيها MainActivity.java بعد اكتمال الإعلان
+window.onNativeRewardedAd = function(amount){
+  addCoins(Number(amount) || 0,'إعلان بمكافأة');
+
+  const cb = pendingRewardCallback;
+  pendingRewardCallback = null;
+
+  if(cb) cb();
+};
+
+// في حال فشل تحميل/عرض الإعلان
+window.onNativeRewardedAdFailed = function(){
+  pendingRewardCallback = null;
+  toast('الإعلان غير متاح حاليًا، حاول مرة أخرى');
+};
 function demoAd(name){
   return new Promise(resolve=>{
     $('adTitle').textContent=name;
