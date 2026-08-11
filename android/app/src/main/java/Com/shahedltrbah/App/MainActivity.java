@@ -28,7 +28,7 @@ import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 
 public class MainActivity extends Activity {
     // Production IDs created in the user's AdMob account.
-    private static final String REWARDED_AD_UNIT = "ca-app-pub-6105372541214318/6152110806";
+    private static final String REWARDED_AD_UNIT = "ca-app-pub-6105372541214318/6324335345";
     private static final String INTERSTITIAL_AD_UNIT = "ca-app-pub-6105372541214318/8852144964";
     private static final String BANNER_AD_UNIT = "ca-app-pub-6105372541214318/9590511560";
     private static final String APP_OPEN_AD_UNIT = "ca-app-pub-6105372541214318/5946780024";
