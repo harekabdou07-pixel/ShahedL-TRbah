@@ -86,16 +86,22 @@ public class MainActivity extends Activity {
             }
         });
 
-        root.addView(webView, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                0,
-                1f
-        ));
+        root.addView(
+                webView,
+                new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        0,
+                        1f
+                )
+        );
 
-        root.addView(banner, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
+        root.addView(
+                banner,
+                new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+        );
 
         setContentView(root);
 
@@ -158,13 +164,27 @@ public class MainActivity extends Activity {
 
                         rewardedAd = null;
 
+                        String msg =
+                                "AdMob Rewarded ERROR\n"
+                                + "Code: " + error.getCode()
+                                + "\nDomain: " + error.getDomain()
+                                + "\nMessage: " + error.getMessage();
+
                         android.util.Log.e(
                                 "ADMOB_REWARDED",
-                                "code=" + error.getCode()
-                                        + " domain=" + error.getDomain()
-                                        + " message=" + error.getMessage()
-                                        + " response=" + error.getResponseInfo()
+                                msg
                         );
+
+                        runOnUiThread(() -> {
+
+                            new android.app.AlertDialog.Builder(
+                                    MainActivity.this
+                            )
+                                    .setTitle("AdMob Error")
+                                    .setMessage(msg)
+                                    .setPositiveButton("OK", null)
+                                    .show();
+                        });
                     }
                 }
         );
@@ -181,192 +201,11 @@ public class MainActivity extends Activity {
         RewardedAd ad = rewardedAd;
         rewardedAd = null;
 
-        pendingReward = Math.max(1, requestedReward);
-
-        ad.show(this, (RewardItem item) -> {
-
-            int earned = item.getAmount() > 0
-                    ? item.getAmount()
-                    : pendingReward;
-
-            pendingReward = 0;
-
-            runOnUiThread(() -> {
-
-                webView.evaluateJavascript(
-                        "window.onNativeRewardedAd(" + earned + ")",
-                        null
-                );
-            });
-        });
-    }
-
-    private void notifyRewardedFailed() {
-
-        pendingReward = 0;
-        pendingCallback = "";
-
-        runOnUiThread(() ->
-                webView.evaluateJavascript(
-                        "window.onNativeRewardedAdFailed()",
-                        null
-                )
+        pendingReward = Math.max(
+                1,
+                requestedReward
         );
-    }
 
-    private void loadInterstitial() {
-
-        InterstitialAd.load(
+        ad.show(
                 this,
-                INTERSTITIAL_AD_UNIT,
-                new AdRequest.Builder().build(),
-
-                new InterstitialAdLoadCallback() {
-
-                    @Override
-                    public void onAdLoaded(InterstitialAd ad) {
-
-                        interstitialAd = ad;
-
-                        ad.setFullScreenContentCallback(
-                                new FullScreenContentCallback() {
-
-                                    @Override
-                                    public void onAdDismissedFullScreenContent() {
-                                        interstitialAd = null;
-                                        loadInterstitial();
-                                    }
-
-                                    @Override
-                                    public void onAdFailedToShowFullScreenContent(
-                                            AdError error) {
-
-                                        interstitialAd = null;
-                                        loadInterstitial();
-                                    }
-                                }
-                        );
-                    }
-
-                    @Override
-                    public void onAdFailedToLoad(LoadAdError error) {
-                        interstitialAd = null;
-                    }
-                }
-        );
-    }
-
-    private void maybeShowInterstitial() {
-
-        pageSwitchCount++;
-
-        long now = System.currentTimeMillis();
-
-        if (pageSwitchCount < 2 ||
-                now - lastInterstitialShown < 60_000L) {
-            return;
-        }
-
-        if (interstitialAd == null) {
-            loadInterstitial();
-            return;
-        }
-
-        InterstitialAd ad = interstitialAd;
-        interstitialAd = null;
-
-        lastInterstitialShown = now;
-        pageSwitchCount = 0;
-
-        ad.show(this);
-    }
-
-    private void loadAppOpen() {
-
-        if (appOpenAd != null || appOpenShowing) {
-            return;
-        }
-
-        AppOpenAd.load(
-                this,
-                APP_OPEN_AD_UNIT,
-                new AdRequest.Builder().build(),
-
-                new AppOpenAd.AppOpenAdLoadCallback() {
-
-                    @Override
-                    public void onAdLoaded(AppOpenAd ad) {
-
-                        appOpenAd = ad;
-
-                        ad.setFullScreenContentCallback(
-                                new FullScreenContentCallback() {
-
-                                    @Override
-                                    public void onAdDismissedFullScreenContent() {
-
-                                        appOpenShowing = false;
-                                        appOpenAd = null;
-
-                                        loadAppOpen();
-                                    }
-
-                                    @Override
-                                    public void onAdFailedToShowFullScreenContent(
-                                            AdError error) {
-
-                                        appOpenShowing = false;
-                                        appOpenAd = null;
-
-                                        loadAppOpen();
-                                    }
-                                }
-                        );
-                    }
-
-                    @Override
-                    public void onAdFailedToLoad(LoadAdError error) {
-
-                        appOpenAd = null;
-                    }
-                }
-        );
-    }
-
-    private void showAppOpenIfReady() {
-
-        if (isFinishing()
-                || isDestroyed()
-                || appOpenShowing
-                || appOpenAd == null) {
-
-            if (appOpenAd == null) {
-                loadAppOpen();
-            }
-
-            return;
-        }
-
-        appOpenShowing = true;
-        appOpenAd.show(this);
-    }
-
-    private class AdBridge {
-
-        @JavascriptInterface
-        public void showRewardedAd(int reward) {
-
-            runOnUiThread(() ->
-                    showRewarded(reward)
-            );
-        }
-
-        @JavascriptInterface
-        public void showInterstitialAd() {
-
-            runOnUiThread(() ->
-                    maybeShowInterstitial()
-            );
-        }
-    }
-}
+               
